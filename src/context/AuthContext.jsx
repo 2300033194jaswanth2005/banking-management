@@ -61,34 +61,32 @@ export function AuthProvider({ children }) {
     setCurrentUser(null)
   }
 
+  function updateSession(user) {
+    const updated = { ...currentUser, balance: user.balance }
+    sessionStorage.setItem('bms_session', JSON.stringify(updated))
+    setCurrentUser(updated)
+  }
+
   function deposit(accNo, amount) {
     const users = loadUsers()
     const idx = users.findIndex(u => u.accNo === accNo)
-    if (idx === -1 || amount <= 0) return { ok: false, msg: 'Invalid amount.' }
-    users[idx].balance += Number(amount)
+    if (idx === -1 || Number(amount) <= 0) return { ok: false, msg: 'Invalid amount.' }
+    users[idx].balance = Number((users[idx].balance + Number(amount)).toFixed(2))
     saveUsers(users)
-    const txns = loadTransactions()
-    txns.push({ accNo, type: 'DEPOSIT', amount: Number(amount), date: new Date().toLocaleString(), note: '' })
-    saveTransactions(txns)
-    const updated = { ...currentUser, balance: users[idx].balance }
-    sessionStorage.setItem('bms_session', JSON.stringify(updated))
-    setCurrentUser(updated)
+    loadTransactions(), saveTransactions([...loadTransactions(), { accNo, type: 'DEPOSIT', amount: Number(amount), date: new Date().toLocaleString(), note: '' }])
+    updateSession(users[idx])
     return { ok: true }
   }
 
   function withdraw(accNo, amount) {
     const users = loadUsers()
     const idx = users.findIndex(u => u.accNo === accNo)
-    if (idx === -1 || amount <= 0) return { ok: false, msg: 'Invalid amount.' }
-    if (users[idx].balance < amount) return { ok: false, msg: 'Insufficient balance.' }
-    users[idx].balance -= Number(amount)
+    if (idx === -1 || Number(amount) <= 0) return { ok: false, msg: 'Invalid amount.' }
+    if (users[idx].balance < Number(amount)) return { ok: false, msg: 'Insufficient balance.' }
+    users[idx].balance = Number((users[idx].balance - Number(amount)).toFixed(2))
     saveUsers(users)
-    const txns = loadTransactions()
-    txns.push({ accNo, type: 'WITHDRAW', amount: Number(amount), date: new Date().toLocaleString(), note: '' })
-    saveTransactions(txns)
-    const updated = { ...currentUser, balance: users[idx].balance }
-    sessionStorage.setItem('bms_session', JSON.stringify(updated))
-    setCurrentUser(updated)
+    saveTransactions([...loadTransactions(), { accNo, type: 'WITHDRAW', amount: Number(amount), date: new Date().toLocaleString(), note: '' }])
+    updateSession(users[idx])
     return { ok: true }
   }
 
@@ -98,18 +96,16 @@ export function AuthProvider({ children }) {
     const toIdx   = users.findIndex(u => u.accNo === Number(toAccNo))
     if (toIdx === -1) return { ok: false, msg: 'Recipient account not found.' }
     if (fromIdx === toIdx) return { ok: false, msg: 'Cannot transfer to same account.' }
-    if (users[fromIdx].balance < amount) return { ok: false, msg: 'Insufficient balance.' }
-    users[fromIdx].balance -= Number(amount)
-    users[toIdx].balance   += Number(amount)
+    if (users[fromIdx].balance < Number(amount)) return { ok: false, msg: 'Insufficient balance.' }
+    users[fromIdx].balance = Number((users[fromIdx].balance - Number(amount)).toFixed(2))
+    users[toIdx].balance   = Number((users[toIdx].balance   + Number(amount)).toFixed(2))
     saveUsers(users)
-    const txns = loadTransactions()
     const date = new Date().toLocaleString()
-    txns.push({ accNo: fromAccNo, type: 'TRANSFER OUT', amount: Number(amount), date, note: `To A/C ${toAccNo}` })
-    txns.push({ accNo: Number(toAccNo), type: 'TRANSFER IN', amount: Number(amount), date, note: `From A/C ${fromAccNo}` })
-    saveTransactions(txns)
-    const updated = { ...currentUser, balance: users[fromIdx].balance }
-    sessionStorage.setItem('bms_session', JSON.stringify(updated))
-    setCurrentUser(updated)
+    saveTransactions([...loadTransactions(),
+      { accNo: fromAccNo,       type: 'TRANSFER OUT', amount: Number(amount), date, note: `To A/C ${toAccNo}` },
+      { accNo: Number(toAccNo), type: 'TRANSFER IN',  amount: Number(amount), date, note: `From A/C ${fromAccNo}` }
+    ])
+    updateSession(users[fromIdx])
     return { ok: true }
   }
 

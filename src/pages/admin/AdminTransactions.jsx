@@ -4,7 +4,10 @@ import { useAuth } from '../../context/AuthContext'
 export default function AdminTransactions() {
   const { getAllTransactions } = useAuth()
   const [search, setSearch] = useState('')
-  const txns = getAllTransactions()
+  const [txns, setTxns] = useState(() => getAllTransactions())
+
+  // refresh on mount to always show latest
+  useState(() => { setTxns(getAllTransactions()) })
 
   const filtered = txns.filter(t =>
     String(t.accNo).includes(search) ||

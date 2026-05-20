@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import Navbar from './components/Navbar'
@@ -24,10 +24,13 @@ function Layout({ children }) {
 }
 
 function AppRoutes() {
+  const { currentUser } = useAuth()
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={currentUser
+          ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/user'} replace />
+          : <Login />} />
 
         {/* User Routes */}
         <Route path="/user" element={<PrivateRoute role="user"><UserDashboard /></PrivateRoute>} />

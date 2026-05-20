@@ -3,11 +3,11 @@ import { useAuth } from '../../context/AuthContext'
 
 export default function AdminUsers() {
   const { getAllUsers, deleteUser } = useAuth()
-  const [users, setUsers] = useState(getAllUsers)
+  const [users, setUsers] = useState(() => getAllUsers())
   const [search, setSearch] = useState('')
 
   function handleDelete(accNo) {
-    if (!confirm(`Delete account ${accNo}?`)) return
+    if (!window.confirm(`Delete account ${accNo}?`)) return
     deleteUser(accNo)
     setUsers(getAllUsers())
   }
