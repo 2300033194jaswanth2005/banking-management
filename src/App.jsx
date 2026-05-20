@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -11,7 +11,6 @@ import History from './pages/user/History'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminTransactions from './pages/admin/AdminTransactions'
-import { useAuth } from './context/AuthContext'
 
 function Layout({ children }) {
   const { currentUser } = useAuth()
@@ -28,21 +27,26 @@ function AppRoutes() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={currentUser
-          ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/user'} replace />
-          : <Login />} />
+        <Route path="/" element={
+          currentUser
+            ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/user'} replace />
+            : <Login />
+        } />
 
         {/* User Routes */}
-        <Route path="/user" element={<PrivateRoute role="user"><UserDashboard /></PrivateRoute>} />
+        <Route path="/user"          element={<PrivateRoute role="user"><UserDashboard /></PrivateRoute>} />
         <Route path="/user/deposit"  element={<PrivateRoute role="user"><Deposit /></PrivateRoute>} />
         <Route path="/user/withdraw" element={<PrivateRoute role="user"><Withdraw /></PrivateRoute>} />
         <Route path="/user/transfer" element={<PrivateRoute role="user"><Transfer /></PrivateRoute>} />
         <Route path="/user/history"  element={<PrivateRoute role="user"><History /></PrivateRoute>} />
 
         {/* Admin Routes */}
-        <Route path="/admin" element={<PrivateRoute role="admin"><AdminDashboard /></PrivateRoute>} />
-        <Route path="/admin/users"        element={<PrivateRoute role="admin"><AdminUsers /></PrivateRoute>} />
-        <Route path="/admin/transactions" element={<PrivateRoute role="admin"><AdminTransactions /></PrivateRoute>} />
+        <Route path="/admin"               element={<PrivateRoute role="admin"><AdminDashboard /></PrivateRoute>} />
+        <Route path="/admin/users"         element={<PrivateRoute role="admin"><AdminUsers /></PrivateRoute>} />
+        <Route path="/admin/transactions"  element={<PrivateRoute role="admin"><AdminTransactions /></PrivateRoute>} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
   )
